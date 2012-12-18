@@ -113,12 +113,15 @@
         xmax -= xmin
         ymax -= ymin
         radius *= radius
-        weight = (1 - weight) * 255
+        weight = 1 - weight
 
-        var i     = (ymin + ymax - 1) * width + (xmin + xmax - 1),
-            skip  = width - xmax,
-            scale = -4 / radius,
+        var i         = (ymin + ymax - 1) * width + (xmin + xmax - 1),
+            skip      = width - xmax,
+            scale     = -4 / radius,
+            threshold = Math.log(weight) / scale,
             u, v, du, dv, sq
+
+        weight *= 255
 
         for(v = ymax; v--; i -= skip) {
           dv = v - y
@@ -128,7 +131,7 @@
 
             du = u - x
             sq = du * du + dv * dv
-            if(sq > radius)
+            if(sq > threshold)
               continue
 
             if(Math.exp(sq * scale) * fractal(du, dv, z) >= weight)
