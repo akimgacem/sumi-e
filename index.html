@@ -78,18 +78,24 @@
       /* FIXME: Instead of thresholding, I bet some exposure function would
        * look more like paint. */
       function spot(x, y, z, radius, weight, color) {
+        radius *= radius
+        weight  = 1 - weight
+
+        var threshold = -0.25 * radius * Math.log(weight),
+            edge      = Math.sqrt(threshold)
+
         /* Find boundaries, bailing if the brush stroke wouldn't be visible on
          * screen. */
-        var xmin = x - radius
+        var xmin = x - edge
         if(xmin >= width) return
 
-        var ymin = y - radius
+        var ymin = y - edge
         if(ymin >= height) return
 
-        var xmax = x + radius + 1
+        var xmax = x + edge + 1
         if(xmax <= 0) return
 
-        var ymax = y + radius + 1
+        var ymax = y + edge + 1
         if(ymax <= 0) return
 
         /* If execution reaches here, we know at least part of the brush stroke
@@ -108,20 +114,16 @@
 
         /* Iterate over all of the pixels in the bounding box, setting them to
          * black. */
-        x -= xmin
-        y -= ymin
-        xmax -= xmin
-        ymax -= ymin
-        radius *= radius
-        weight = 1 - weight
-
-        var i         = (ymin + ymax - 1) * width + (xmin + xmax - 1),
-            skip      = width - xmax,
-            scale     = -4 / radius,
-            threshold = Math.log(weight) / scale,
-            u, v, du, dv, sq
-
+        x      -= xmin
+        y      -= ymin
+        xmax   -= xmin
+        ymax   -= ymin
         weight *= 255
+
+        var i     = (ymin + ymax - 1) * width + (xmin + xmax - 1),
+            skip  = width - xmax,
+            scale = -4 / radius,
+            u, v, du, dv, sq
 
         for(v = ymax; v--; i -= skip) {
           dv = v - y
