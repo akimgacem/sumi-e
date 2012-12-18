@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>Sumi-e</title>
   </head>
 
   <body>
-    <canvas id="paper" width="640" height="480">
+    <canvas id="paper" width="512" height="512">
     </canvas>
 
     <script type="text/javascript">
       "use strict"
 
-      var canvas = document.getElementById("paper"),
-          width  = canvas.width,
-          height = canvas.height,
-          ctx    = canvas.getContext("2d"),
-          id     = ctx.getImageData(0, 0, width, height),
-          pixels = new Int32Array(id.data.buffer),
-          noise  = new Uint8Array(512)
+      var VISCOSITY = 0.125,
+          canvas    = document.getElementById("paper"),
+          width     = canvas.width,
+          height    = canvas.height,
+          ctx       = canvas.getContext("2d"),
+          id        = ctx.getImageData(0, 0, width, height),
+          pixels    = new Int32Array(id.data.buffer),
+          noise     = new Uint8Array(512)
 
       function seed() {
         var i = 256
@@ -191,7 +193,7 @@
           m  = length(xs, ys, 0, bx, by, 1, cx, cy)
           n  = Math.floor(m)
           s  = 1 / n
-          m *= 0.125 * s
+          m  = m * s * VISCOSITY
 
           for(j = n; j--; z += m) {
             k = j * s
