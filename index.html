@@ -193,7 +193,7 @@
           m  = length(xs, ys, 0, bx, by, 1, cx, cy)
           n  = Math.floor(m)
           s  = 1 / n
-          m  = m * s * VISCOSITY
+          m  = VISCOSITY * m * s
 
           for(j = n; j--; z += m) {
             k = j * s
@@ -205,21 +205,29 @@
       var x = canvas.width  * 0.5,
           y = canvas.height * 0.5,
           r = 128,
-          t = Math.PI * 0.25
+          t = Math.PI * 0.125
 
       seed()
       stroke(64, 0xFF000000, [
-        x + Math.cos(t * 7) * r, y - Math.sin(t * 7) * r, 0.000,
-        x + Math.cos(t * 0) * r, y - Math.sin(t * 0) * r, 0.700,
-        x + Math.cos(t * 1) * r, y - Math.sin(t * 1) * r, 0.663,
-        x + Math.cos(t * 2) * r, y - Math.sin(t * 2) * r, 0.625,
-        x + Math.cos(t * 3) * r, y - Math.sin(t * 3) * r, 0.588,
-        x + Math.cos(t * 4) * r, y - Math.sin(t * 4) * r, 0.550,
-        x + Math.cos(t * 5) * r, y - Math.sin(t * 5) * r, 0.513,
-        x + Math.cos(t * 6) * r, y - Math.sin(t * 6) * r, 0.475,
-        x + Math.cos(t * 7) * r, y - Math.sin(t * 7) * r, 0.438,
-        x + Math.cos(t * 0) * r, y - Math.sin(t * 0) * r, 0.400,
-        x + Math.cos(t * 1) * r, y - Math.sin(t * 1) * r, 0.000
+        x + Math.cos(t * -1) * r, y - Math.sin(t * -1) * r, 0.000,
+        x + Math.cos(t *  0) * r, y - Math.sin(t *  0) * r, 0.700,
+        x + Math.cos(t *  1) * r, y - Math.sin(t *  1) * r, 0.681,
+        x + Math.cos(t *  2) * r, y - Math.sin(t *  2) * r, 0.663,
+        x + Math.cos(t *  3) * r, y - Math.sin(t *  3) * r, 0.644,
+        x + Math.cos(t *  4) * r, y - Math.sin(t *  4) * r, 0.625,
+        x + Math.cos(t *  5) * r, y - Math.sin(t *  5) * r, 0.606,
+        x + Math.cos(t *  6) * r, y - Math.sin(t *  6) * r, 0.588,
+        x + Math.cos(t *  7) * r, y - Math.sin(t *  7) * r, 0.569,
+        x + Math.cos(t *  8) * r, y - Math.sin(t *  8) * r, 0.550,
+        x + Math.cos(t *  9) * r, y - Math.sin(t *  9) * r, 0.531,
+        x + Math.cos(t * 10) * r, y - Math.sin(t * 10) * r, 0.513,
+        x + Math.cos(t * 11) * r, y - Math.sin(t * 11) * r, 0.494,
+        x + Math.cos(t * 12) * r, y - Math.sin(t * 12) * r, 0.475,
+        x + Math.cos(t * 13) * r, y - Math.sin(t * 13) * r, 0.456,
+        x + Math.cos(t * 14) * r, y - Math.sin(t * 14) * r, 0.438,
+        x + Math.cos(t * 15) * r, y - Math.sin(t * 15) * r, 0.419,
+        x + Math.cos(t * 16) * r, y - Math.sin(t * 16) * r, 0.400,
+        x + Math.cos(t * 17) * r, y - Math.sin(t * 17) * r, 0.000,
       ])
       ctx.putImageData(id, 0, 0)
     </script>
