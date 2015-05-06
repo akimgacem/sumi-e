@@ -5,236 +5,41 @@
   </head>
 
   <body>
-    <canvas id="paper" width="512" height="512">
+    <canvas id="canvas" width="512" height="512">
     </canvas>
 
+    <script type="text/javascript" src="paint.js">
+    </script>
+
     <script type="text/javascript">
-      "use strict"
+      (function() {
+        "use strict"
+        var canvas, ctx, i, id, n, r, t, viscosity, x;
 
-      var VISCOSITY = 0.125,
-          canvas    = document.getElementById("paper"),
-          width     = canvas.width,
-          height    = canvas.height,
-          ctx       = canvas.getContext("2d"),
-          id        = ctx.getImageData(0, 0, width, height),
-          pixels    = new Int32Array(id.data.buffer),
-          noise     = new Uint8Array(512)
+        viscosity = 0.0625;
 
-      function seed() {
-        var i = 256
+        canvas = document.getElementById("canvas");
+        ctx    = canvas.getContext("2d");
+        id     = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-        while(i--)
-          noise[i] = noise[i + 256] = Math.random() * 256
-      }
+        r = Math.min(id.width, id.height) / 3.0;
+        n = Math.ceil(2.0 * Math.PI * r);
 
-      function perlin(u, v, w) {
-        var x = Math.floor(u),
-            y = Math.floor(v),
-            z = Math.floor(w),
-            i = (z * 131 + y * 53 + x) & 255
+        for(i = n; i--; ) {
+          x = (i + 0.5) / n;
+          t = 2.0 * Math.PI * x;
 
-        u -= x
-        v -= y
-        w -= z
-
-        u = u * u * (3 - 2 * u)
-        v = v * v * (3 - 2 * v)
-        w = w * w * (3 - 2 * w)
-
-        x = 1 - u
-        y = 1 - v
-        z = 1 - w
-
-        return z * (y * (x * noise[i      ] + u * noise[i +   1])  +
-                    v * (x * noise[i +  53] + u * noise[i +  54])) +
-               w * (y * (x * noise[i + 131] + u * noise[i + 132])  +
-                    v * (x * noise[i + 184] + u * noise[i + 185]))
-      }
-
-      /* The ratio of each octave to the next is approximately the golden
-       * ratio. In testing, this actually seemed to give the best results. (I
-       * came across this phenomenon by testing the Fibonacci sequence.) */
-      function fractal(x, y, z) {
-        return (
-          perlin(x              , y          +  2, z          +  3) * 0.06125 +
-          perlin(x * 0.5000 +  5, y * 0.5000 +  7, z * 0.5000 + 11) * 0.09911 +
-          perlin(x * 0.2500 + 13, y * 0.2500 + 17, z * 0.2500 + 19) * 0.16036 +
-          perlin(x * 0.1250 + 23, y * 0.1250 + 29, z * 0.1250 + 31) * 0.25946 +
-          perlin(x * 0.0625 + 37, y * 0.0625 + 41, z * 0.0625 + 43) * 0.41982
-        )
-      }
-
-      function catmullrom(a, b, c, d) {
-        var p = -0.5 * a + 1.5 * b - 1.5 * c + 0.5 * d,
-            q =        a - 2.5 * b + 2.0 * c - 0.5 * d,
-            r = -0.5 * a           + 0.5 * c          ,
-            s =                  b
-
-        return function(x) {
-          return ((p * x + q) * x + r) * x + s
+          paint(
+            id,
+            id.width  * 0.5 + Math.cos(t) * r,
+            id.height * 0.5 + Math.sin(t) * r,
+            (0.75 * x + 0.25) * 0.25 * r,
+            t * r * viscosity
+          );
         }
-      }
 
-      /* FIXME: Instead of thresholding, I bet some exposure function would
-       * look more like paint. */
-      function spot(x, y, z, radius, weight, color) {
-        radius *= radius
-        weight  = 1 - weight
-
-        var threshold = -0.25 * radius * Math.log(weight),
-            edge      = Math.sqrt(threshold)
-
-        /* Find boundaries, bailing if the brush stroke wouldn't be visible on
-         * screen. */
-        var xmin = x - edge
-        if(xmin >= width) return
-
-        var ymin = y - edge
-        if(ymin >= height) return
-
-        var xmax = x + edge + 1
-        if(xmax <= 0) return
-
-        var ymax = y + edge + 1
-        if(ymax <= 0) return
-
-        /* If execution reaches here, we know at least part of the brush stroke
-         * is visible on screen. Cap the boundaries to the window. */
-        if(xmin < 0) xmin = 0
-        else xmin = Math.floor(xmin)
-
-        if(ymin < 0) ymin = 0
-        else ymin = Math.floor(ymin)
-
-        if(xmax > width) xmax = width
-        else xmax = Math.floor(xmax)
-
-        if(ymax > height) ymax = height
-        else ymax = Math.floor(ymax)
-
-        /* Iterate over all of the pixels in the bounding box, setting them to
-         * black. */
-        x      -= xmin
-        y      -= ymin
-        xmax   -= xmin
-        ymax   -= ymin
-        weight *= 255
-
-        var i     = (ymin + ymax - 1) * width + (xmin + xmax - 1),
-            skip  = width - xmax,
-            scale = -4 / radius,
-            u, v, du, dv, sq
-
-        for(v = ymax; v--; i -= skip) {
-          dv = v - y
-          for(u = xmax; u--; --i) {
-            if(pixels[i])
-              continue
-
-            du = u - x
-            sq = du * du + dv * dv
-            if(sq > threshold)
-              continue
-
-            if(Math.exp(sq * scale) * fractal(du, dv, z) >= weight)
-              pixels[i] = color
-          }
-        }
-      }
-
-      function length(x, y, a, ax, ay, b, bx, by) {
-        var dx = bx - ax,
-            dy = by - ay,
-            d  = Math.sqrt(dx * dx + dy * dy)
-
-        if(d <= 1)
-          return d
-
-        d  = a + (b - a) * 0.5
-        dx = x(d)
-        dy = y(d)
-
-        return length(x, y, a, ax, ay, d, dx, dy) +
-               length(x, y, d, dx, dy, b, bx, by)
-      }
-
-      function stroke(radius, color, spline) {
-        var z  = 0,
-            i  = spline.length,
-            cw = spline[--i],
-            cy = spline[--i],
-            cx = spline[--i],
-            bw = spline[--i],
-            by = spline[--i],
-            bx = spline[--i],
-            aw = spline[--i],
-            ay = spline[--i],
-            ax = spline[--i],
-            dw, dy, dx, ws, ys, xs, m, n, s, j, k
-
-        spot(bx, by, 0, radius, bw, color)
-
-        while(i) {
-          dw = cw
-          dy = cy
-          dx = cx
-
-          cw = bw
-          cy = by
-          cx = bx
-
-          bw = aw
-          by = ay
-          bx = ax
-
-          aw = spline[--i]
-          ay = spline[--i]
-          ax = spline[--i]
-
-          ws = catmullrom(aw, bw, cw, dw)
-          ys = catmullrom(ay, by, cy, dy)
-          xs = catmullrom(ax, bx, cx, dx)
-
-          m  = length(xs, ys, 0, bx, by, 1, cx, cy)
-          n  = Math.floor(m)
-          s  = 1 / n
-          m  = VISCOSITY * m * s
-
-          for(j = n; j--; z += m) {
-            k = j * s
-            spot(xs(k), ys(k), z, radius, ws(k), color)
-          }
-        }
-      }
-
-      var x = canvas.width  * 0.5,
-          y = canvas.height * 0.5,
-          r = 128,
-          t = Math.PI * 0.125
-
-      seed()
-      stroke(64, 0xFF000000, [
-        x + Math.cos(t * -1) * r, y - Math.sin(t * -1) * r, 0.000,
-        x + Math.cos(t *  0) * r, y - Math.sin(t *  0) * r, 0.700,
-        x + Math.cos(t *  1) * r, y - Math.sin(t *  1) * r, 0.681,
-        x + Math.cos(t *  2) * r, y - Math.sin(t *  2) * r, 0.663,
-        x + Math.cos(t *  3) * r, y - Math.sin(t *  3) * r, 0.644,
-        x + Math.cos(t *  4) * r, y - Math.sin(t *  4) * r, 0.625,
-        x + Math.cos(t *  5) * r, y - Math.sin(t *  5) * r, 0.606,
-        x + Math.cos(t *  6) * r, y - Math.sin(t *  6) * r, 0.588,
-        x + Math.cos(t *  7) * r, y - Math.sin(t *  7) * r, 0.569,
-        x + Math.cos(t *  8) * r, y - Math.sin(t *  8) * r, 0.550,
-        x + Math.cos(t *  9) * r, y - Math.sin(t *  9) * r, 0.531,
-        x + Math.cos(t * 10) * r, y - Math.sin(t * 10) * r, 0.513,
-        x + Math.cos(t * 11) * r, y - Math.sin(t * 11) * r, 0.494,
-        x + Math.cos(t * 12) * r, y - Math.sin(t * 12) * r, 0.475,
-        x + Math.cos(t * 13) * r, y - Math.sin(t * 13) * r, 0.456,
-        x + Math.cos(t * 14) * r, y - Math.sin(t * 14) * r, 0.438,
-        x + Math.cos(t * 15) * r, y - Math.sin(t * 15) * r, 0.419,
-        x + Math.cos(t * 16) * r, y - Math.sin(t * 16) * r, 0.400,
-        x + Math.cos(t * 17) * r, y - Math.sin(t * 17) * r, 0.000
-      ])
-      ctx.putImageData(id, 0, 0)
+        ctx.putImageData(id, 0, 0);
+      })();
     </script>
   </body>
 </html>
