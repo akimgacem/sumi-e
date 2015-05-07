@@ -2,11 +2,15 @@
 <html>
   <head>
     <title>Sumi-e</title>
+    <meta charset="utf-8">
   </head>
 
   <body>
     <canvas id="canvas" width="512" height="512">
     </canvas>
+
+    <script type="text/javascript" src="noise.js">
+    </script>
 
     <script type="text/javascript" src="paint.js">
     </script>
@@ -16,7 +20,7 @@
         "use strict"
         var canvas, ctx, i, id, n, r, t, viscosity, x;
 
-        viscosity = 0.0625;
+        viscosity = 0.03125;
 
         canvas = document.getElementById("canvas");
         ctx    = canvas.getContext("2d");
