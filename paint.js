@@ -1,54 +1,120 @@
 (function() {
   "use strict";
-  var ceil, exp, floor, noise;
+  var bezier, paint;
 
-  ceil  = Math.ceil;
-  exp   = Math.exp;
-  floor = Math.floor;
+  paint = (function() {
+    var ceil, exp, floor, noise;
 
-  noise = window.noise().fractal;
+    ceil  = Math.ceil;
+    exp   = Math.exp;
+    floor = Math.floor;
 
-  window.paint = function(id, x, y, r, t) {
-    var du, dv, k, max_u, max_v, min_u, min_v, sq, u, v;
+    noise = window.noise().fractal;
 
-    min_u = floor(x - 2.0 * r);
-    min_v = floor(y - 2.0 * r);
-    max_u = ceil (x + 2.0 * r);
-    max_v = ceil (y + 2.0 * r);
+    return function(id, x, y, r, t) {
+      var du, dv, k, max_u, max_v, min_u, min_v, sq, u, v;
 
-    if(max_u <= 0 ||
-       max_v <= 0 ||
-       min_u >= id.width ||
-       min_v >= id.height)
-      return;
+      min_u = floor(x - 2.0 * r);
+      min_v = floor(y - 2.0 * r);
+      max_u = ceil (x + 2.0 * r);
+      max_v = ceil (y + 2.0 * r);
 
-    if(min_u < 0)
-      min_u = 0;
+      if(max_u <= 0 ||
+         max_v <= 0 ||
+         min_u >= id.width ||
+         min_v >= id.height)
+        return;
 
-    if(min_v < 0)
-      min_v = 0;
+      if(min_u < 0)
+        min_u = 0;
 
-    if(max_u > id.width)
-      max_u = id.width;
+      if(min_v < 0)
+        min_v = 0;
 
-    if(max_v > id.height)
-      max_v = id.height;
+      if(max_u > id.width)
+        max_u = id.width;
 
-    k = -1.0 / (r * r);
+      if(max_v > id.height)
+        max_v = id.height;
 
-    for(v = min_v; v < max_v; v++) {
-      dv = (v + 0.5) - y;
+      k = -1.0 / (r * r);
 
-      for(u = min_u; u < max_u; u++) {
-        du = (u + 0.5) - x;
-        sq = k * (du * du + dv * dv);
-        if(sq <= -4.0)
-          continue;
-        if(noise(du, dv, t) >= 255.0 * exp(sq))
-          continue;
+      for(v = min_v; v < max_v; v++) {
+        dv = (v + 0.5) - y;
 
-        id.data[((v * id.width + u) << 2) | 3] = 255;
+        for(u = min_u; u < max_u; u++) {
+          du = (u + 0.5) - x;
+          sq = k * (du * du + dv * dv);
+          if(sq <= -4.0)
+            continue;
+          if(noise(du, dv, t) >= 255.0 * exp(sq))
+            continue;
+
+          id.data[((v * id.width + u) << 2) | 3] = 255;
+        }
       }
-    }
-  };
+    };
+  })();
+
+  bezier = (function() {
+    var bezier, sq;
+
+    sq = (function() {
+      var sqrt;
+
+      sqrt = Math.sqrt;
+
+      return function(x, y, z) {
+        return sqrt(x * x + y * y + z * z);
+      };
+    })();
+
+    bezier = function(
+      id,
+      t, dt,
+      ax, ay, az,
+      bx, by, bz,
+      cx, cy, cz,
+      dx, dy, dz
+    ) {
+      var ex = (ax + bx) * 0.5,
+          ey = (ay + by) * 0.5,
+          ez = (az + bz) * 0.5,
+          fx = (bx + cx) * 0.5,
+          fy = (by + cy) * 0.5,
+          fz = (bz + cz) * 0.5,
+          gx = (cx + dx) * 0.5,
+          gy = (cy + dy) * 0.5,
+          gz = (cz + dz) * 0.5,
+          hx = (ex + fx) * 0.5,
+          hy = (ey + fy) * 0.5,
+          hz = (ez + fz) * 0.5,
+          ix = (fx + gx) * 0.5,
+          iy = (fy + gy) * 0.5,
+          iz = (fz + gz) * 0.5,
+          jx = (hx + ix) * 0.5,
+          jy = (hy + iy) * 0.5,
+          jz = (hz + iz) * 0.5,
+          ll = sq(jx - ax, jy - ay, jz - az),
+          lr = sq(dx - jx, dy - jy, dz - jz);
+
+      if(ll + lr <= 1.0) {
+        t += ll * dt;
+        paint(id, jx, jy, jz, t);
+        t += lr * dt;
+      }
+
+      else {
+        t = bezier(id, t, dt, ax, ay, az, ex, ey, ez, hx, hy, hz, jx, jy, jz);
+        t = bezier(id, t, dt, jx, jy, jz, ix, iy, iz, gx, gy, gz, dx, dy, dz);
+      }
+
+      return t;
+    };
+
+    return bezier;
+  })();
+
+  window.paint  = paint;
+  window.bezier = bezier;
 })();
