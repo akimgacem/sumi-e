@@ -57,17 +57,9 @@
   })();
 
   bezier = (function() {
-    var bezier, sq;
+    var bezier, sqrt;
 
-    sq = (function() {
-      var sqrt;
-
-      sqrt = Math.sqrt;
-
-      return function(x, y, z) {
-        return sqrt(x * x + y * y + z * z);
-      };
-    })();
+    sqrt = Math.sqrt;
 
     bezier = function(
       id,
@@ -77,35 +69,57 @@
       cx, cy, cz,
       dx, dy, dz
     ) {
-      var ex = (ax + bx) * 0.5,
-          ey = (ay + by) * 0.5,
-          ez = (az + bz) * 0.5,
-          fx = (bx + cx) * 0.5,
-          fy = (by + cy) * 0.5,
-          fz = (bz + cz) * 0.5,
-          gx = (cx + dx) * 0.5,
-          gy = (cy + dy) * 0.5,
-          gz = (cz + dz) * 0.5,
-          hx = (ex + fx) * 0.5,
-          hy = (ey + fy) * 0.5,
-          hz = (ez + fz) * 0.5,
-          ix = (fx + gx) * 0.5,
-          iy = (fy + gy) * 0.5,
-          iz = (fz + gz) * 0.5,
-          jx = (hx + ix) * 0.5,
-          jy = (hy + iy) * 0.5,
-          jz = (hz + iz) * 0.5,
-          ll = sq(jx - ax, jy - ay, jz - az),
-          lr = sq(dx - jx, dy - jy, dz - jz);
+      var ex, ey, ez, fx, fy, fz, gx, gy, gz, hx, hy, hz, ix, iy, iz, jx, jy,
+          jz, x, y, z, l;
 
-      if(ll + lr <= 1.0) {
-        t += ll * dt;
-        paint(id, jx, jy, jz, t);
-        t += lr * dt;
+      /* Split the bezier curve into two bezier curves, using de Casteljau's
+       * algorithm. */
+      ex = (ax + bx) * 0.5;
+      ey = (ay + by) * 0.5;
+      ez = (az + bz) * 0.5;
+      fx = (bx + cx) * 0.5;
+      fy = (by + cy) * 0.5;
+      fz = (bz + cz) * 0.5;
+      gx = (cx + dx) * 0.5;
+      gy = (cy + dy) * 0.5;
+      gz = (cz + dz) * 0.5;
+      hx = (ex + fx) * 0.5;
+      hy = (ey + fy) * 0.5;
+      hz = (ez + fz) * 0.5;
+      ix = (fx + gx) * 0.5;
+      iy = (fy + gy) * 0.5;
+      iz = (fz + gz) * 0.5;
+      jx = (hx + ix) * 0.5;
+      jy = (hy + iy) * 0.5;
+      jz = (hz + iz) * 0.5;
+
+      /* Recurse left. */
+      x = jx - ax;
+      y = jy - ay;
+      z = jz - az;
+      l = x * x + y * y + z * z;
+
+      if(l <= 1.0) {
+        paint(id, ax, ay, az, t);
+        t += dt * Math.sqrt(l);
       }
 
       else {
         t = bezier(id, t, dt, ax, ay, az, ex, ey, ez, hx, hy, hz, jx, jy, jz);
+      }
+
+      /* Recurse right. */
+      x = dx - jx;
+      y = dy - jy;
+      z = dz - jz;
+      l = x * x + y * y + z * z;
+
+      if(l <= 1.0) {
+        paint(id, jx, jy, jz, t);
+        t += dt * Math.sqrt(l);
+      }
+
+      else {
         t = bezier(id, t, dt, jx, jy, jz, ix, iy, iz, gx, gy, gz, dx, dy, dz);
       }
 
