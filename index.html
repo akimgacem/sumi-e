@@ -15,14 +15,13 @@
     <script type="text/javascript">
       (function() {
         "use strict"
-        var canvas, ctx, i, id, n, point, r, t, viscosity, x;
+        var canvas, ctx, i, id, n, r, t, viscosity, x;
 
         viscosity = 0.03125;
 
         canvas = document.getElementById("canvas");
         ctx    = canvas.getContext("2d");
         id     = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        point  = brush(id);
 
         r = Math.min(id.width, id.height) / 3.0;
         n = Math.ceil(2.0 * Math.PI * r);
@@ -31,7 +30,8 @@
           x = (i + 0.5) / n;
           t = 2.0 * Math.PI * x;
 
-          point(
+          brush(
+            id,
             t * r * viscosity,
             Math.cos(t) * r + 0.5 * id.width,
             Math.sin(t) * r + 0.5 * id.height,
