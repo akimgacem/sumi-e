@@ -15,7 +15,7 @@
     <script type="text/javascript">
       (function() {
         "use strict"
-        var canvas, ctx, end, i, id, n, point, r, start, t, viscosity, x;
+        var canvas, ctx, i, id, n, point, r, t, viscosity, x;
 
         viscosity = 0.03125;
 
@@ -26,8 +26,6 @@
 
         r = Math.min(id.width, id.height) / 3.0;
         n = Math.ceil(2.0 * Math.PI * r);
-
-        start = Date.now();
 
         for(i = n; i--; ) {
           x = (i + 0.5) / n;
@@ -41,11 +39,7 @@
           );
         }
 
-        end = Date.now();
-
         ctx.putImageData(id, 0, 0);
-
-        alert((end - start) + " ms");
       })();
     </script>
   </body>
