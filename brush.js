@@ -80,7 +80,7 @@
           du = (u + 0.5) - x;
           dv = (v + 0.5) - y;
           sq = du * du + dv * dv;
-          if(sq >= 4.0 * r * f)
+          if(sq >= 4.0 * r * r)
             continue;
 
           i = ((v * id.width + u) << 2) | 3;
