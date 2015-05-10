@@ -9,65 +9,43 @@
     <canvas id="canvas" width="512" height="512">
     </canvas>
 
-    <script type="text/javascript" src="noise.js">
-    </script>
-
-    <script type="text/javascript" src="paint.js">
+    <script type="text/javascript" src="brush.js">
     </script>
 
     <script type="text/javascript">
       (function() {
         "use strict"
-        var c, canvas, ctx, id, r, t, viscosity;
+        var canvas, ctx, end, i, id, n, point, r, start, t, viscosity, x;
 
-        c = 0.551915024494;
         viscosity = 0.03125;
 
         canvas = document.getElementById("canvas");
         ctx    = canvas.getContext("2d");
         id     = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        point  = brush(id);
 
         r = Math.min(id.width, id.height) / 3.0;
+        n = Math.ceil(2.0 * Math.PI * r);
 
-        t = 0.0;
+        start = Date.now();
 
-        t = bezier(
-          id,
-          t, viscosity,
-          0.5 * id.width + r    , 0.5 * id.height        , 0.25 * r,
-          0.5 * id.width + r    , 0.5 * id.height - c * r, 0.25 * r,
-          0.5 * id.width + c * r, 0.5 * id.height - r    , 0.20 * r,
-          0.5 * id.width        , 0.5 * id.height - r    , 0.20 * r
-        );
+        for(i = n; i--; ) {
+          x = (i + 0.5) / n;
+          t = 2.0 * Math.PI * x;
 
-        t = bezier(
-          id,
-          t, viscosity,
-          0.5 * id.width        , 0.5 * id.height - r    , 0.20 * r,
-          0.5 * id.width - c * r, 0.5 * id.height - r    , 0.20 * r,
-          0.5 * id.width - r    , 0.5 * id.height - c * r, 0.16 * r,
-          0.5 * id.width - r    , 0.5 * id.height        , 0.16 * r
-        );
+          point(
+            t * r * viscosity,
+            Math.cos(t) * r + 0.5 * id.width,
+            Math.sin(t) * r + 0.5 * id.height,
+            (0.75 * x + 0.25) * (0.25 * r)
+          );
+        }
 
-        t = bezier(
-          id,
-          t, viscosity,
-          0.5 * id.width - r    , 0.5 * id.height        , 0.16 * r,
-          0.5 * id.width - r    , 0.5 * id.height + c * r, 0.16 * r,
-          0.5 * id.width - c * r, 0.5 * id.height + r    , 0.11 * r,
-          0.5 * id.width        , 0.5 * id.height + r    , 0.11 * r
-        );
-
-        t = bezier(
-          id,
-          t, viscosity,
-          0.5 * id.width        , 0.5 * id.height + r    , 0.11 * r,
-          0.5 * id.width + c * r, 0.5 * id.height + r    , 0.11 * r,
-          0.5 * id.width + r    , 0.5 * id.height + c * r, 0.06 * r,
-          0.5 * id.width + r    , 0.5 * id.height        , 0.06 * r
-        );
+        end = Date.now();
 
         ctx.putImageData(id, 0, 0);
+
+        alert((end - start) + " ms");
       })();
     </script>
   </body>
